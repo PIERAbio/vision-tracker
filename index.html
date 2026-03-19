@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piera Vision Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: only light;
+  --midnight: #0a0e1a;
+  --midnight2: #111827;
+  --gold: #d4a843;
+  --gold-light: #f0d078;
+  --white: #ffffff;
+  --off-white: #f5f7fa;
+  --ink: #0d1117;
+  --muted: #6b7280;
+  --rule: #d1d5db;
+  --blue-pen: #1a4fa8;
+  --red-pen: #c0392b;
+  --green: #2a7a4a;
+  --surface: #ffffff;
+  --shadow: 0 2px 20px rgba(10,14,26,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--off-white); color: var(--ink); min-height: 100vh; }
+
+/* ── HEADER ── */
+.header {
+  background: var(--midnight); color: var(--white);
+  padding: 2rem 2.5rem; border-bottom: 3px solid var(--gold);
+  display: flex; align-items: flex-end; gap: 2rem; flex-wrap: wrap;
+}
+.header-logo {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem; font-weight: 700; letter-spacing: 0.2em; line-height: 1;
+  color: var(--gold); text-transform: uppercase;
+}
+.header-logo em { color: var(--gold); font-style: italic; }
+.header-sub {
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,255,255,0.82); padding-bottom: 0.3rem;
+}
+
+/* ── LAYOUT ── */
+.container { max-width: 880px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+
+.intro { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--rule); }
+.intro .date-badge { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.6rem; }
+.intro p { font-family: 'Inter', sans-serif; font-size: 1rem; line-height: 1.75; color: #3a3f4a; font-weight: 400; max-width: 600px; }
+
+.progress-bar { height: 3px; background: var(--rule); margin-bottom: 2rem; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.4s ease; }
+
+/* ── SECTION CARDS ── */
+.section {
+  background: var(--surface); border-radius: 3px;
+  box-shadow: var(--shadow); padding: 2rem 2.2rem;
+  margin-bottom: 1.4rem; border-top: 3px solid transparent;
+  transition: border-color 0.2s;
+}
+.section:focus-within { border-top-color: var(--gold); }
+.section-label { font-size: 0.64rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 0.3rem; }
+.section-title { font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 0.4rem; }
+.section-desc { font-size: 0.83rem; color: var(--muted); margin-bottom: 1.4rem; line-height: 1.55; }
+
+/* ── FORM FIELDS ── */
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.field-row.single { grid-template-columns: 1fr; }
+@media (max-width: 540px) { .field-row { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.field label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.field input, .field select, .field textarea {
+  border: 1px solid var(--rule); border-radius: 2px; padding: 0.6rem 0.85rem;
+  font-family: 'Inter', sans-serif; font-size: 0.94rem; color: var(--ink);
+  background: #fafafa; outline: none; transition: border-color 0.15s; -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--midnight2); background: #fff; }
+.field textarea { resize: vertical; min-height: 75px; }
+.req { color: var(--red-pen); margin-left: 2px; }
+
+/* ── SLIDERS ── */
+.slider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem 2rem; }
+@media (max-width: 600px) { .slider-grid { grid-template-columns: 1fr; } }
+.slider-item { padding: 0.85rem 0; border-bottom: 1px solid #f0f0f0; }
+.slider-item:last-child { border-bottom: none; }
+.slider-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem; }
+.slider-name { font-size: 0.88rem; font-weight: 500; color: var(--ink); }
+.slider-val { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; min-width: 2.8rem; text-align: right; transition: color 0.2s; }
+.slider-labels { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 5px;
+  border-radius: 3px; outline: none; cursor: pointer;
+  background: linear-gradient(to right, var(--red-pen) 0%, #e0e0e0 50%, var(--green) 100%);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--midnight); border: 3px solid white;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.3); cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--midnight); border: 3px solid white; cursor: pointer;
+}
+
+/* ── EYE SELECTOR BUTTONS ── */
+.eye-section-divider { margin-top: 1.4rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); }
+.eye-section-desc { font-size: 0.83rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.55; }
+.eye-selector-row { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f0f0f0; }
+.eye-selector-row:last-child { border-bottom: none; margin-bottom: 0; }
+.eye-selector-label { font-size: 0.88rem; font-weight: 500; color: var(--ink); margin-bottom: 0.5rem; }
+.eye-btn-group { display: flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+.eye-btn {
+  flex: 1; padding: 0.65rem 0.5rem; border: none; background: #fafafa;
+  font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
+  color: var(--muted); cursor: pointer; transition: all 0.12s;
+  border-right: 1px solid var(--rule);
+}
+.eye-btn:last-child { border-right: none; }
+.eye-btn:hover { background: #f0f0f0; color: var(--ink); }
+.eye-btn.sel-left  { background: #fbeaea; color: var(--red-pen); font-weight: 600; }
+.eye-btn.sel-equal { background: var(--midnight); color: white; font-weight: 600; }
+.eye-btn.sel-right { background: #fbeaea; color: var(--red-pen); font-weight: 600; }
+
+/* ── AMSLER GRID ── */
+.amsler-instructions {
+  background: #fffbf2; border-left: 3px solid var(--gold);
+  padding: 0.9rem 1.1rem; font-size: 0.84rem; line-height: 1.65;
+  color: #3a3530; margin-bottom: 1.2rem;
+}
+.instr-blue { color: var(--blue-pen); font-weight: 600; }
+.instr-red  { color: var(--red-pen);  font-weight: 600; }
+.eye-grids { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+@media (max-width: 580px) { .eye-grids { grid-template-columns: 1fr; } }
+.eye-grid-block { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.eye-label { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.pen-toolbar { display: flex; gap: 0.5rem; width: 100%; flex-wrap: wrap; align-items: center; margin-bottom: 0.4rem; }
+.pen-btn {
+  display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.8rem;
+  border: 2px solid; border-radius: 2px; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.04em; transition: all 0.12s; background: transparent;
+}
+.pen-btn.blue { border-color: var(--blue-pen); color: var(--blue-pen); }
+.pen-btn.blue.active { background: var(--blue-pen); color: white; }
+.pen-btn.red  { border-color: var(--red-pen);  color: var(--red-pen);  }
+.pen-btn.red.active  { background: var(--red-pen);  color: white; }
+.pen-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.pen-dot.blue { background: var(--blue-pen); }
+.pen-dot.red  { background: var(--red-pen);  }
+.toolbar-sep { flex: 1; }
+.small-btn {
+  padding: 0.38rem 0.7rem; border: 1px solid var(--rule); border-radius: 2px;
+  background: transparent; cursor: pointer; font-size: 0.74rem; color: var(--muted);
+  font-family: 'Inter', sans-serif; transition: all 0.12s;
+}
+.small-btn:hover { border-color: var(--ink); color: var(--ink); }
+.canvas-wrap { position: relative; cursor: crosshair; touch-action: none; }
+canvas { display: block; border: 1px solid #ccc; }
+.canvas-caption { font-size: 0.66rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; text-align: center; margin-top: 0.3rem; }
+.grid-score-row { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 0.3rem; }
+.score-badge { padding: 0.2rem 0.6rem; border-radius: 2px; font-size: 0.7rem; font-weight: 500; }
+.score-badge.blue { background: #e8eef8; color: var(--blue-pen); }
+.score-badge.red  { background: #fbeaea; color: var(--red-pen);  }
+.info-callout { background: #eef3fb; border-left: 3px solid var(--blue-pen); padding: 0.75rem 1rem; font-size: 0.81rem; line-height: 1.55; color: #2a3550; margin-top: 1.2rem; }
+
+/* ── CONTRAST ── */
+/* ── FULL-SCREEN GRID MODAL ── */
+.grid-modal {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: #000; flex-direction: column; align-items: center;
+  justify-content: flex-start; touch-action: none;
+}
+.grid-modal.open { display: flex; }
+.modal-header {
+  width: 100%; background: var(--midnight); padding: 0.7rem 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0; border-bottom: 2px solid var(--gold);
+}
+.modal-eye-label {
+  font-family: 'Outfit', sans-serif; font-size: 0.8rem;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-weight: 600;
+}
+.modal-close {
+  background: transparent; border: 1px solid rgba(255,255,255,0.3);
+  color: white; border-radius: 2px; padding: 0.35rem 0.9rem;
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; cursor: pointer;
+}
+.modal-close:hover { background: rgba(255,255,255,0.1); }
+.modal-distance-tip {
+  width: 100%; background: #1a1200; border-bottom: 1px solid var(--gold);
+  padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--gold-light);
+  text-align: center; line-height: 1.5; flex-shrink: 0;
+}
+.modal-distance-tip strong { color: white; }
+.modal-canvas-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  width: 100%; background: #111; overflow: hidden; touch-action: none;
+  padding: 0.5rem;
+}
+.modal-canvas-area canvas {
+  display: block; touch-action: none;
+  width: min(96vw, calc(100vh - 200px));
+  height: min(96vw, calc(100vh - 200px));
+  border: 1px solid #444;
+}
+.modal-toolbar {
+  width: 100%; background: var(--midnight); padding: 0.65rem 1rem;
+  display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap;
+}
+.modal-toolbar .pen-btn { font-size: 0.82rem; padding: 0.55rem 1rem; }
+.modal-toolbar .small-btn {
+  color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.25); font-size: 0.78rem;
+}
+.modal-toolbar .small-btn:hover { color: white; border-color: rgba(255,255,255,0.6); }
+.modal-toolbar .toolbar-sep { flex: 1; }
+
+/* Preview card in form */
+.grid-preview-block { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.grid-preview-wrap { position: relative; cursor: pointer; border: 1px solid #ccc; border-radius: 2px; overflow: hidden; width: 100%; }
+.grid-preview-wrap canvas { display: block; width: 100%; height: auto; pointer-events: none; }
+.grid-open-overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 0.4rem;
+  background: rgba(10,14,26,0.5); cursor: pointer; transition: background 0.15s;
+}
+.grid-open-overlay:hover { background: rgba(10,14,26,0.65); }
+.grid-open-btn {
+  background: var(--midnight); color: var(--gold); border: 1px solid var(--gold);
+  border-radius: 2px; padding: 0.5rem 1.4rem;
+  font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 600;
+  letter-spacing: 0.08em; pointer-events: none;
+}
+.grid-open-hint { font-size: 0.68rem; color: rgba(255,255,255,0.85); letter-spacing: 0.06em; text-transform: uppercase; pointer-events: none; }
+
+/* ── CONTRAST TEST ── */
+.contrast-patch {
+  width: 76px; height: 76px; border-radius: 2px; display: flex; align-items: center;
+  justify-content: center; font-size: 1.8rem; font-weight: 700; border: 1px solid #ccc; flex-shrink: 0;
+}
+.contrast-question { flex: 1; min-width: 160px; }
+.contrast-question p { font-size: 0.86rem; margin-bottom: 0.45rem; color: #3a3530; line-height: 1.4; }
+
+/* ── CHIPS ── */
+.light-scale { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.light-chip {
+  padding: 0.38rem 0.72rem; border: 1px solid var(--rule); border-radius: 20px;
+  cursor: pointer; font-size: 0.79rem; color: var(--muted); transition: all 0.12s; background: #fafafa;
+}
+.light-chip.selected { background: var(--midnight); color: white; border-color: var(--midnight); }
+
+/* ── QUESTIONS / RADIOS — styled as chips ── */
+.question-list { display: flex; flex-direction: column; gap: 0; }
+
+.question-item {
+  padding: 1.1rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.question-item:last-child { border-bottom: none; }
+
+.question-num {
+  font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--gold); font-weight: 600; margin-bottom: 0.3rem;
+}
+.question-text {
+  font-size: 0.92rem; color: var(--ink); margin-bottom: 0.7rem;
+  line-height: 1.45; font-weight: 500;
+}
+
+/* Hide native radio, use chip style instead */
+.radio-group { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.radio-option { position: relative; }
+.radio-option input[type=radio] {
+  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+}
+.radio-option span {
+  display: inline-block; padding: 0.42rem 0.9rem;
+  border: 1.5px solid var(--rule); border-radius: 20px;
+  font-size: 0.82rem; color: var(--muted); cursor: pointer;
+  background: #fafafa; transition: all 0.14s; white-space: nowrap;
+  user-select: none; -webkit-user-select: none;
+}
+.radio-option span:hover { border-color: #aaa; color: var(--ink); background: #f3f3f3; }
+.radio-option input[type=radio]:checked + span {
+  background: var(--midnight); color: var(--gold-light);
+  border-color: var(--midnight); font-weight: 500;
+}
+
+/* ── PRIVACY ── */
+.privacy-section {
+  background: var(--surface); border-radius: 3px; box-shadow: var(--shadow);
+  padding: 2rem 2.2rem; margin-bottom: 1.4rem; border-top: 3px solid var(--gold);
+}
+.privacy-notice {
+  background: #fffbf2; border: 1px solid #e8dfc0; border-radius: 2px;
+  padding: 1.3rem 1.5rem; margin-bottom: 1.4rem;
+}
+.privacy-notice p { font-size: 0.84rem; line-height: 1.7; color: #3a3530; margin-bottom: 0.75rem; }
+.privacy-notice p:last-child { margin-bottom: 0; }
+.privacy-notice strong { font-weight: 500; color: var(--ink); }
+.consent-block { display: flex; flex-direction: column; gap: 0.8rem; }
+.consent-item {
+  display: flex; align-items: flex-start; gap: 0.9rem; padding: 0.85rem 1rem;
+  border: 1px solid var(--rule); border-radius: 2px; background: #fafafa; transition: border-color 0.15s;
+}
+.consent-item:focus-within { border-color: var(--midnight); }
+.consent-item input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; accent-color: var(--midnight); cursor: pointer; }
+.consent-item label { font-size: 0.84rem; line-height: 1.55; color: #3a3530; cursor: pointer; }
+.consent-item label strong { font-weight: 500; color: var(--ink); }
+.consent-error { color: var(--red-pen); font-size: 0.78rem; display: none; margin-top: 0.5rem; }
+.consent-error.show { display: block; }
+
+/* ── SUBMIT ── */
+.submit-section { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; padding: 1.5rem 0 0; }
+.error-msg { color: var(--red-pen); font-size: 0.8rem; display: none; }
+.error-msg.show { display: block; }
+.submit-btn {
+  background: var(--midnight); color: var(--gold-light); border: none;
+  padding: 1rem 3.5rem; font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem; font-weight: 600; letter-spacing: 0.12em;
+  cursor: pointer; border-radius: 2px; transition: all 0.2s;
+}
+.submit-btn:hover { background: #1a2540; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(10,14,26,0.25); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 0.5rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SUCCESS ── */
+.success-overlay {
+  display: none; position: fixed; inset: 0; background: var(--midnight);
+  z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; text-align: center; padding: 2.5rem;
+}
+.success-overlay.show { display: flex; }
+.success-icon { font-size: 3rem; color: var(--gold); }
+.success-title { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; color: var(--white); }
+.success-sub { font-size: 0.9rem; color: #8899bb; max-width: 400px; line-height: 1.7; }
+.success-sub strong { color: var(--gold-light); }
+</style>
+</head>
+<body style="background-color:#f5f7fa !important; color:#0d1117 !important;"
+      data-force-color-scheme="light">
+
+<div class="header">
+  <div>
+    <div class="header-logo">PIERA <span style="font-family:'Outfit',sans-serif;font-weight:300;letter-spacing:0.12em;color:rgba(255,255,255,0.82);font-size:1.6rem;">Vision Tracker</span></div>
+  </div>
+  <div class="header-sub">Self-Assessment &nbsp;·&nbsp; Confidential &nbsp;·&nbsp; No Login Required</div>
+</div>
+
+<div class="container">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+  <!-- MEDICAL DISCLAIMER -->
+  <div style="
+    background: var(--midnight);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.8rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  ">
+    <div style="font-size:1.3rem; flex-shrink:0; margin-top:0.1rem;">⚕️</div>
+    <div>
+      <div style="font-size:0.68rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); font-weight:600; margin-bottom:0.4rem;">Medical Disclaimer</div>
+      <p style="font-size:0.9rem; line-height:1.7; color:#d8e0ee; margin:0;">
+        This tool is <strong style="color:white;">not intended to diagnose, treat, cure, or prevent any disease or medical condition.</strong>
+        It is a self-reporting survey designed for product feedback and personal tracking purposes only.
+        Results do not constitute a medical opinion and should not be used as a substitute for professional medical advice, diagnosis, or treatment.
+        Always seek the guidance of a qualified eye care professional — such as an ophthalmologist or optometrist — with any questions you may have regarding a medical condition or changes in your vision.
+        <strong style="color:var(--gold-light);">If you experience sudden vision changes, seek medical attention immediately.</strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="intro">
+    <div class="date-badge" id="todayDate"></div>
+    <p>This assessment tracks changes in your central and peripheral vision over time. There are no right or wrong answers — just your honest experience today.</p>
+  </div>
+
+  <form id="mainForm" novalidate>
+
+  <!-- SECTION 1 -->
+  <div class="section">
+    <div class="section-label">Section 1 of 6</div>
+    <div class="section-title">Your Information</div>
+    <div class="field-row">
+      <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="fullName" placeholder="First and last name" required autocomplete="name"></div>
+      <div class="field"><label>Email Address <span class="req">*</span></label><input type="email" id="email" placeholder="you@example.com" required autocomplete="email"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Phone Number <span class="req">*</span></label><input type="tel" id="phone" placeholder="(555) 000-0000" required autocomplete="tel"></div>
+      <div class="field"><label>Date of Birth</label><input type="date" id="dob"></div>
+    </div>
+    <div class="field-row single">
+      <div class="field"><label>Diagnosis / Condition</label><input type="text" id="diagnosis" placeholder="e.g. Dry AMD, Geographic Atrophy, Low Vision…"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section">
+    <div class="section-label">Section 2 of 6</div>
+    <div class="section-title">Vision Quality Scales</div>
+    <div class="section-desc">Rate each from −10 (very poor) to +10 (excellent).</div>
+    <div class="slider-grid" id="sliderGrid"></div>
+
+    <div class="eye-section-divider">
+      <div class="eye-section-desc">For the following, select which eye is more affected today.</div>
+      <div id="eyeBtnGroup"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="section">
+    <div class="section-label">Section 3 of 6</div>
+    <div class="section-title">Amsler Grid Drawing</div>
+    <div class="amsler-instructions">
+      <strong>Instructions:</strong> Wear your reading glasses if you use them. Cover one eye at a time.<br>
+      Tap each grid to open it <strong>full-screen</strong>, then hold your phone <strong>6–8 inches from your eye</strong> and focus on the <strong>center dot</strong> without moving your eye.<br>
+      &nbsp;&nbsp;• <span class="instr-blue">Blue → Wavy or distorted areas</span><br>
+      &nbsp;&nbsp;• <span class="instr-red">Red → Missing, blank, or dark areas</span>
+    </div>
+
+    <div class="eye-grids">
+      <div class="grid-preview-block">
+        <div class="eye-label">◉ Left Eye</div>
+        <div class="grid-preview-wrap" onclick="openModal('left')">
+          <canvas id="previewLeft" width="300" height="300"></canvas>
+          <div class="grid-open-overlay">
+            <div class="grid-open-btn">Tap to Draw</div>
+            <div class="grid-open-hint">Opens full screen</div>
+          </div>
+        </div>
+        <div class="canvas-caption">Tap grid to open full-screen</div>
+        <div class="grid-score-row">
+          <span class="score-badge blue" id="scoreLeftBlue">Wavy: 0/1600</span>
+          <span class="score-badge red"  id="scoreLeftRed">Missing: 0/1600</span>
+        </div>
+      </div>
+      <div class="grid-preview-block">
+        <div class="eye-label">◉ Right Eye</div>
+        <div class="grid-preview-wrap" onclick="openModal('right')">
+          <canvas id="previewRight" width="300" height="300"></canvas>
+          <div class="grid-open-overlay">
+            <div class="grid-open-btn">Tap to Draw</div>
+            <div class="grid-open-hint">Opens full screen</div>
+          </div>
+        </div>
+        <div class="canvas-caption">Tap grid to open full-screen</div>
+        <div class="grid-score-row">
+          <span class="score-badge blue" id="scoreRightBlue">Wavy: 0/1600</span>
+          <span class="score-badge red"  id="scoreRightRed">Missing: 0/1600</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL-SCREEN GRID MODAL -->
+  <div class="grid-modal" id="gridModal">
+    <div class="modal-header">
+      <div class="modal-eye-label" id="modalEyeLabel">◉ Left Eye</div>
+      <button type="button" class="modal-close" onclick="closeModal()">Done ✓</button>
+    </div>
+    <div class="modal-distance-tip">
+      Hold phone <strong>6–8 inches from your eye.</strong>&nbsp; Focus on the center dot — do not move your eye from it.
+    </div>
+    <div class="modal-canvas-area">
+      <canvas id="gridModal_canvas" width="600" height="600"></canvas>
+    </div>
+    <div class="modal-toolbar">
+      <button type="button" class="pen-btn blue" id="modalBtnBlue" onclick="setModalPen('blue')"><span class="pen-dot blue"></span>Wavy</button>
+      <button type="button" class="pen-btn red"  id="modalBtnRed"  onclick="setModalPen('red')"><span class="pen-dot red"></span>Missing</button>
+      <span class="toolbar-sep"></span>
+      <button type="button" class="small-btn" onclick="modalUndo()">↩ Undo</button>
+      <button type="button" class="small-btn" onclick="modalClear()">Clear</button>
+    </div>
+  </div>
+
+  <!-- SECTION 4 -->
+  <div class="section">
+    <div class="section-label">Section 4 of 6</div>
+    <div class="section-title">Contrast Sensitivity</div>
+    <div class="section-desc">Can you clearly see the letter inside each patch?</div>
+    <div id="contrastTests"></div>
+  </div>
+
+  <!-- SECTION 5 -->
+  <div class="section">
+    <div class="section-label">Section 5 of 6</div>
+    <div class="section-title">Light &amp; Color</div>
+    <div class="question-list">
+      <div class="question-item">
+        <div class="question-num">Question 1</div>
+        <div class="question-text">How sensitive are you to bright light today?</div>
+        <div class="light-scale" id="photoScale">
+          <div class="light-chip" onclick="selectChip('photo',this,'Not at all')">Not at all</div>
+          <div class="light-chip" onclick="selectChip('photo',this,'Mild')">Mild</div>
+          <div class="light-chip" onclick="selectChip('photo',this,'Moderate')">Moderate</div>
+          <div class="light-chip" onclick="selectChip('photo',this,'Severe')">Severe</div>
+          <div class="light-chip" onclick="selectChip('photo',this,'Debilitating')">Debilitating</div>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 2</div>
+        <div class="question-text">Do colors appear different between your two eyes?</div>
+        <div class="light-scale" id="colorScale">
+          <div class="light-chip" onclick="selectChip('color',this,'No difference')">No difference</div>
+          <div class="light-chip" onclick="selectChip('color',this,'Slightly washed out')">Slightly washed out</div>
+          <div class="light-chip" onclick="selectChip('color',this,'Noticeably duller')">Noticeably duller</div>
+          <div class="light-chip" onclick="selectChip('color',this,'Colors seem wrong')">Colors seem wrong</div>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 3</div>
+        <div class="question-text">When driving or outside at night, do you see halos or starbursts around lights (streetlights, headlights)?</div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="night_glare" value="Never"><span>Never</span></label>
+          <label class="radio-option"><input type="radio" name="night_glare" value="Occasionally"><span>Occasionally</span></label>
+          <label class="radio-option"><input type="radio" name="night_glare" value="Often"><span>Often</span></label>
+          <label class="radio-option"><input type="radio" name="night_glare" value="Always"><span>Always</span></label>
+          <label class="radio-option"><input type="radio" name="night_glare" value="Don't drive at night"><span>Don't drive at night</span></label>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 4</div>
+        <div class="question-text">When you move from a bright area to a dark one, how many minutes until your vision settles?<br><span style="font-size:0.76rem;color:var(--muted);">Normal: under 7 min &nbsp;·&nbsp; Mildly delayed: 7–12 min &nbsp;·&nbsp; AMD range: 12–20 min &nbsp;·&nbsp; Severely delayed: 20+ min</span></div>
+        <div style="margin-top:0.6rem;">
+          <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--muted);margin-bottom:0.25rem;letter-spacing:0.04em;">
+            <span>0 min (instant)</span><span style="color:#b8912a;">7 min</span><span style="color:#c0392b;">12 min</span><span>30 min (severe)</span>
+          </div>
+          <input type="range" min="0" max="30" value="5" step="1" id="sl_dark_adapt_time"
+            style="background: linear-gradient(to right, #2a7a4a 0%, #b8912a 23%, #c0392b 40%, #8b0000 100%);"
+            oninput="updateDarkAdaptSlider(this.value)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.3rem;">
+            <span style="font-size:0.78rem;color:var(--muted);">Estimated time:</span>
+            <span id="dark_adapt_display" style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;color:#2a7a4a;">5 min</span>
+          </div>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 5</div>
+        <div class="question-text">Does your vision temporarily blur and then clear when you blink? <span style="font-size:0.78rem;color:var(--muted);font-weight:400;">(a sign of tear film instability)</span></div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="blink_clear" value="Never"><span>Never</span></label>
+          <label class="radio-option"><input type="radio" name="blink_clear" value="Occasionally"><span>Occasionally</span></label>
+          <label class="radio-option"><input type="radio" name="blink_clear" value="Often"><span>Often</span></label>
+          <label class="radio-option"><input type="radio" name="blink_clear" value="Constantly"><span>Constantly</span></label>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 6</div>
+        <div class="question-text">Do you see floaters today?</div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="floaters" value="None"><span>None</span></label>
+          <label class="radio-option"><input type="radio" name="floaters" value="A few, not bothersome"><span>A few, not bothersome</span></label>
+          <label class="radio-option"><input type="radio" name="floaters" value="Noticeable"><span>Noticeable</span></label>
+          <label class="radio-option"><input type="radio" name="floaters" value="Many / disruptive"><span>Many / disruptive</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6 -->
+  <div class="section">
+    <div class="section-label">Section 6 of 6</div>
+    <div class="section-title">Overall &amp; Changes</div>
+    <div class="question-list">
+      <div class="question-item">
+        <div class="question-num">Question 1</div>
+        <div class="question-text">Which eye(s) are affected?</div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="eye_affected" value="Left only"><span>Left only</span></label>
+          <label class="radio-option"><input type="radio" name="eye_affected" value="Right only"><span>Right only</span></label>
+          <label class="radio-option"><input type="radio" name="eye_affected" value="Both eyes"><span>Both eyes</span></label>
+          <label class="radio-option"><input type="radio" name="eye_affected" value="Unsure"><span>Unsure</span></label>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 2</div>
+        <div class="question-text">Have you noticed any changes since your last assessment?</div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="change" value="First assessment"><span>First assessment</span></label>
+          <label class="radio-option"><input type="radio" name="change" value="No change"><span>No change</span></label>
+          <label class="radio-option"><input type="radio" name="change" value="Slight improvement"><span>Slight improvement</span></label>
+          <label class="radio-option"><input type="radio" name="change" value="Slight worsening"><span>Slight worsening</span></label>
+          <label class="radio-option"><input type="radio" name="change" value="Significant worsening"><span>Significant worsening</span></label>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 3</div>
+        <div class="question-text">Are you currently using any Piera product?</div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="product_use" value="Yes, daily"><span>Yes, daily</span></label>
+          <label class="radio-option"><input type="radio" name="product_use" value="Yes, sometimes"><span>Yes, sometimes</span></label>
+          <label class="radio-option"><input type="radio" name="product_use" value="Just started"><span>Just started</span></label>
+          <label class="radio-option"><input type="radio" name="product_use" value="Not yet"><span>Not yet</span></label>
+        </div>
+      </div>
+      <div class="question-item">
+        <div class="question-num">Question 4 — Optional</div>
+        <div class="question-text">Additional notes</div>
+        <div class="field"><textarea id="notes" placeholder="Any other symptoms, changes, or observations…"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIVACY + CONSENT -->
+  <div class="privacy-section">
+    <div class="section-label">Before You Submit</div>
+    <div class="section-title">Privacy &amp; Data Use</div>
+    <div class="privacy-notice">
+      <p><strong>What we collect.</strong> This survey collects your name, email, phone, date of birth, and self-reported vision symptoms including Amsler grid drawings.</p>
+      <p><strong>How we use it.</strong> Responses are used solely for product development and educational purposes by Piera. We do not use your data to diagnose, treat, or manage any medical condition.</p>
+      <p><strong>This is not medical care.</strong> This survey is not a clinical assessment or substitute for professional eye care. Always consult a licensed ophthalmologist or optometrist for medical concerns.</p>
+      <p><strong>How we store it.</strong> Your responses are stored in a private, access-controlled database. We do not sell or share your information without consent.</p>
+      <p><strong>Your rights.</strong> You may request to view, correct, or delete your data at any time.</p>
+      <p style="font-size:0.76rem;color:var(--muted);margin-top:0.5rem;">⚠️ <em>This privacy statement is a placeholder pending legal review.</em></p>
+    </div>
+    <div class="consent-block">
+      <div class="consent-item">
+        <input type="checkbox" id="consent1">
+        <label for="consent1"><strong>I understand this is a survey, not medical care.</strong> This does not constitute a diagnosis or treatment, and I will consult an eye care professional for medical concerns.</label>
+      </div>
+      <div class="consent-item">
+        <input type="checkbox" id="consent2">
+        <label for="consent2"><strong>I consent to data collection and storage.</strong> My name, contact info, and vision responses may be stored securely by Piera for product development.</label>
+      </div>
+      <div class="consent-item">
+        <input type="checkbox" id="consent3">
+        <label for="consent3"><strong>I understand my rights.</strong> I can request access to, correction of, or deletion of my data at any time.</label>
+      </div>
+    </div>
+    <div class="consent-error" id="consentError">Please check all three boxes to continue.</div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="submit-section">
+    <div class="error-msg" id="formError">Please fill in all required fields (name, email, phone).</div>
+    <button type="submit" class="submit-btn" id="submitBtn">Submit Assessment</button>
+  </div>
+
+  </form>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">✦</div>
+  <div class="success-title">Thank you for submitting.</div>
+  <div class="success-sub">
+    Your assessment has been recorded.<br><br>
+    📧 A PDF report has been emailed to <strong id="successEmail"></strong><br><br>
+    <span style="font-size:0.8rem;">If you don't see it within a few minutes, check your spam folder.</span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOi1zBM2jBZcCdiLhR-UweY7smRiRufqKLJ9oSVPE92kHjgef2d6AMEYzDsIT_wAOJyw/exec';
+
+// ── Date ──
+document.getElementById('todayDate').textContent =
+  new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// ══════════════════════════════════════════
+//  SLIDERS  (defined first, called after)
+// ══════════════════════════════════════════
+const SLIDERS = [
+  { id:'day_vision',      label:'Daytime Vision',      neg:'Very poor',     pos:'Excellent'   },
+  { id:'night_vision',    label:'Night Vision',         neg:'Very poor',     pos:'Excellent'   },
+  { id:'visual_acuity',  label:'Visual Sharpness',     neg:'Very blurry',   pos:'Very sharp'  },
+  { id:'color_vibrancy', label:'Color Vibrancy',        neg:'Washed out',    pos:'Vivid'       },
+  { id:'reading_ease',   label:'Reading Ease',          neg:'Cannot read',   pos:'Effortless'  },
+  { id:'glare_sens',     label:'Glare Sensitivity',     neg:'Overwhelming',  pos:'No issue'    },
+  { id:'overall',        label:'Overall Vision Today',  neg:'Very poor',     pos:'Excellent'   },
+];
+const sliderValues = {};
+
+function buildSliders() {
+  const grid = document.getElementById('sliderGrid');
+  SLIDERS.forEach(function(s) {
+    sliderValues[s.id] = 0;
+    var div = document.createElement('div');
+    div.className = 'slider-item';
+    div.innerHTML =
+      '<div class="slider-header">' +
+        '<span class="slider-name">' + s.label + '</span>' +
+        '<span class="slider-val" id="val_' + s.id + '" style="color:#6b7280">0</span>' +
+      '</div>' +
+      '<div class="slider-labels"><span>\u221210 ' + s.neg + '</span><span>' + s.pos + ' +10</span></div>' +
+      '<input type="range" min="-10" max="10" value="0" step="1" id="sl_' + s.id + '">';
+    grid.appendChild(div);
+    document.getElementById('sl_' + s.id).addEventListener('input', function() {
+      updateSlider(s.id, this.value);
+    });
+  });
+}
+
+function updateSlider(id, val) {
+  val = parseInt(val);
+  sliderValues[id] = val;
+  var el = document.getElementById('val_' + id);
+  el.textContent = val > 0 ? '+' + val : String(val);
+  el.style.color = val > 3 ? '#2a7a4a' : val < -3 ? '#c0392b' : '#6b7280';
+}
+
+// ══════════════════════════════════════════
+//  EYE BUTTONS
+// ══════════════════════════════════════════
+const EYE_QUESTIONS = [
+  { id:'eye_pain',    label:'Eye Pain / Discomfort' },
+  { id:'eye_dryness', label:'Eye Dryness'           },
+];
+const eyeSelections = {};
+
+function buildEyeButtons() {
+  var wrap = document.getElementById('eyeBtnGroup');
+  EYE_QUESTIONS.forEach(function(q) {
+    eyeSelections[q.id] = '';
+    var row = document.createElement('div');
+    row.className = 'eye-selector-row';
+    row.innerHTML =
+      '<div class="eye-selector-label">' + q.label + '</div>' +
+      '<div class="eye-btn-group">' +
+        '<button type="button" class="eye-btn" id="eb_' + q.id + '_left">&#9664; Left Eye</button>' +
+        '<button type="button" class="eye-btn" id="eb_' + q.id + '_equal">Equal</button>' +
+        '<button type="button" class="eye-btn" id="eb_' + q.id + '_right">Right Eye &#9654;</button>' +
+      '</div>';
+    wrap.appendChild(row);
+    document.getElementById('eb_' + q.id + '_left').addEventListener('click',  function() { selectEye(q.id, 'Left eye');  });
+    document.getElementById('eb_' + q.id + '_equal').addEventListener('click', function() { selectEye(q.id, 'Equal');     });
+    document.getElementById('eb_' + q.id + '_right').addEventListener('click', function() { selectEye(q.id, 'Right eye'); });
+  });
+}
+
+function selectEye(id, val) {
+  eyeSelections[id] = val;
+  var sfx = { 'Left eye':'left', 'Equal':'equal', 'Right eye':'right' };
+  ['left','equal','right'].forEach(function(opt) {
+    var btn = document.getElementById('eb_' + id + '_' + opt);
+    btn.classList.remove('sel-left','sel-equal','sel-right');
+  });
+  document.getElementById('eb_' + id + '_' + sfx[val]).classList.add('sel-' + sfx[val]);
+}
+
+var darkAdaptTime = 5;
+function updateDarkAdaptSlider(val) {
+  val = parseInt(val);
+  darkAdaptTime = val;
+  var el = document.getElementById('dark_adapt_display');
+  el.textContent = val + ' min';
+  el.style.color = val <= 6 ? '#2a7a4a' : val <= 12 ? '#b8912a' : '#c0392b';
+}
+
+// ══════════════════════════════════════════
+//  CONTRAST
+// ══════════════════════════════════════════
+var CONTRAST_TESTS = [
+  { id:'c1', bg:'#000', fg:'#333', letter:'E', label:'Very low contrast (dark on dark)' },
+  { id:'c2', bg:'#fff', fg:'#ccc', letter:'4', label:'Low contrast (light gray on white)' },
+  { id:'c3', bg:'#e0e0e0', fg:'#aaa', letter:'R', label:'Medium-low contrast' },
+  { id:'c4', bg:'#fff', fg:'#888', letter:'7', label:'Medium contrast' },
+  { id:'c5', bg:'#fff', fg:'#000', letter:'A', label:'High contrast (black on white)' },
+];
+var contrastAnswers = {};
+
+function buildContrast() {
+  var wrap = document.getElementById('contrastTests');
+  CONTRAST_TESTS.forEach(function(t) {
+    contrastAnswers[t.id] = '';
+    var row = document.createElement('div');
+    row.className = 'contrast-row';
+    row.innerHTML =
+      '<div class="contrast-patch" style="background:' + t.bg + ';color:' + t.fg + '">' + t.letter + '</div>' +
+      '<div class="contrast-question">' +
+        '<p>' + t.label + '</p>' +
+        '<div class="radio-group">' +
+          ['Clearly','With effort','Barely','Cannot see'].map(function(v) {
+            return '<label class="radio-option"><input type="radio" name="' + t.id + '" value="' + v + '"><span>' + v + '</span></label>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+    wrap.appendChild(row);
+    row.querySelectorAll('input[type=radio]').forEach(function(r) {
+      r.addEventListener('change', function() { contrastAnswers[t.id] = this.value; });
+    });
+  });
+}
+
+// ══════════════════════════════════════════
+//  LIGHT CHIPS
+// ══════════════════════════════════════════
+var chipSelections = { photo:'', color:'' };
+function selectChip(group, el, val) {
+  document.querySelectorAll('#' + group + 'Scale .light-chip').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+  chipSelections[group] = val;
+}
+
+// ══════════════════════════════════════════
+//  AMSLER GRID ENGINE
+// ══════════════════════════════════════════
+var GRID_SIZE = 300;
+var VISIBLE_CELLS = 10;
+var CELLS = 40;
+var CELL_PX = GRID_SIZE / CELLS;
+var VISIBLE_CELL_PX = GRID_SIZE / VISIBLE_CELLS;
+
+var grids = {
+  left:  { canvas:null, ctx:null, pen:null, drawing:false, strokes:[], currentStroke:null },
+  right: { canvas:null, ctx:null, pen:null, drawing:false, strokes:[], currentStroke:null }
+};
+
+function drawBaseGrid(ctx) {
+  ctx.clearRect(0, 0, GRID_SIZE, GRID_SIZE);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
+  ctx.strokeStyle = '#b0b0b0';
+  ctx.lineWidth = 0.8;
+  for (var i = 0; i <= VISIBLE_CELLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i * VISIBLE_CELL_PX, 0); ctx.lineTo(i * VISIBLE_CELL_PX, GRID_SIZE); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * VISIBLE_CELL_PX); ctx.lineTo(GRID_SIZE, i * VISIBLE_CELL_PX); ctx.stroke();
+  }
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, GRID_SIZE-2, GRID_SIZE-2);
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.arc(GRID_SIZE/2, GRID_SIZE/2, 5, 0, Math.PI*2); ctx.fill();
+}
+
+// Distance between two points
+function dist(a, b) {
+  var dx = a.x - b.x, dy = a.y - b.y;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+// Forgiving closure: checks if any point in the last 25% of the stroke
+// comes within 45px of any point in the first 25% of the stroke.
+// Also accepts strokes where last point is near first (original check, looser threshold).
+function isClosed(stroke) {
+  var pts = stroke.points;
+  if (pts.length < 8) return false;
+
+  // Quick check: last point near first point (generous 45px)
+  if (dist(pts[0], pts[pts.length-1]) < 45) return true;
+
+  // Deep check: scan tail segment vs head segment
+  var headEnd  = Math.max(3, Math.floor(pts.length * 0.25));
+  var tailStart = Math.min(pts.length - 1, Math.floor(pts.length * 0.75));
+  for (var t = tailStart; t < pts.length; t++) {
+    for (var h = 0; h < headEnd; h++) {
+      if (dist(pts[t], pts[h]) < 45) return true;
+    }
+  }
+  return false;
+}
+
+// Check if two strokes of the same color are connectable:
+// end of strokeA is near start of strokeB, or vice versa
+function canMerge(a, b) {
+  if (a.color !== b.color) return false;
+  var SNAP = 38; // px — how close endpoints need to be to snap together
+  var aStart = a.points[0],               aEnd = a.points[a.points.length-1];
+  var bStart = b.points[0],               bEnd = b.points[b.points.length-1];
+  return dist(aEnd, bStart) < SNAP ||
+         dist(bEnd, aStart) < SNAP ||
+         dist(aEnd, bEnd)   < SNAP ||
+         dist(aStart, bStart) < SNAP;
+}
+
+// Merge two strokes into one continuous point array
+function mergeStrokes(a, b) {
+  var aStart = a.points[0], aEnd = a.points[a.points.length-1];
+  var bStart = b.points[0], bEnd = b.points[b.points.length-1];
+  var SNAP = 38;
+  var merged;
+  if (dist(aEnd, bStart) < SNAP) {
+    // a → b
+    merged = a.points.concat(b.points);
+  } else if (dist(bEnd, aStart) < SNAP) {
+    // b → a
+    merged = b.points.concat(a.points);
+  } else if (dist(aEnd, bEnd) < SNAP) {
+    // a → reverse(b)
+    merged = a.points.concat(b.points.slice().reverse());
+  } else {
+    // reverse(b) → a
+    merged = b.points.slice().reverse().concat(a.points);
+  }
+  return { color: a.color, points: merged };
+}
+
+// Fill colors (semi-transparent)
+var FILL_COLORS = { '#1a4fa8': 'rgba(26,79,168,0.18)', '#c0392b': 'rgba(192,57,43,0.18)' };
+
+function redrawAll(eye) {
+  var g = grids[eye];
+  drawBaseGrid(g.ctx);
+
+  g.strokes.forEach(function(stroke) {
+    if (stroke.points.length < 2) return;
+    var ctx = g.ctx;
+
+    if (isClosed(stroke)) {
+      // Draw filled polygon
+      ctx.beginPath();
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      stroke.points.forEach(function(p) { ctx.lineTo(p.x, p.y); });
+      ctx.closePath();
+      // Fill interior
+      ctx.fillStyle = FILL_COLORS[stroke.color] || 'rgba(26,79,168,0.18)';
+      ctx.fill();
+      // Outline
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    } else {
+      // Open stroke — just draw the line
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+      stroke.points.forEach(function(p) { ctx.lineTo(p.x, p.y); });
+      ctx.stroke();
+    }
+  });
+
+  // Redraw grid lines on top so they're always visible
+  var ctx = g.ctx;
+  ctx.strokeStyle = '#b0b0b0';
+  ctx.lineWidth = 0.8;
+  for (var i = 0; i <= VISIBLE_CELLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i * VISIBLE_CELL_PX, 0); ctx.lineTo(i * VISIBLE_CELL_PX, GRID_SIZE); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i * VISIBLE_CELL_PX); ctx.lineTo(GRID_SIZE, i * VISIBLE_CELL_PX); ctx.stroke();
+  }
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, GRID_SIZE-2, GRID_SIZE-2);
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.arc(GRID_SIZE/2, GRID_SIZE/2, 5, 0, Math.PI*2); ctx.fill();
+
+  updateGridScore(eye);
+}
+
+function getPos(canvas, e) {
+  var rect = canvas.getBoundingClientRect();
+  var sx = GRID_SIZE / rect.width, sy = GRID_SIZE / rect.height;
+  if (e.touches) return { x:(e.touches[0].clientX - rect.left)*sx, y:(e.touches[0].clientY - rect.top)*sy };
+  return { x:(e.clientX - rect.left)*sx, y:(e.clientY - rect.top)*sy };
+}
+
+// ── MODAL STATE ──
+var modalEye = 'left';      // which eye is currently open in the modal
+var modalPen = null;        // current pen in the modal
+var modalDrawing = false;
+var modalCurrentStroke = null;
+var MODAL_SIZE = 600;       // internal canvas resolution
+var MODAL_VCELL = MODAL_SIZE / VISIBLE_CELLS;
+var MODAL_CELL  = MODAL_SIZE / CELLS;
+
+var PEN_COLORS = { blue:'#1a4fa8', red:'#c0392b' };
+
+// Draw the Amsler grid onto any ctx at given size
+function drawGridOnCtx(ctx, size, vcell) {
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = '#b0b0b0'; ctx.lineWidth = 0.8;
+  for (var i = 0; i <= VISIBLE_CELLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i*vcell,0); ctx.lineTo(i*vcell,size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*vcell); ctx.lineTo(size,i*vcell); ctx.stroke();
+  }
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, size-2, size-2);
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.arc(size/2, size/2, size/60, 0, Math.PI*2); ctx.fill();
+}
+
+// Redraw strokes onto any ctx at given size
+function drawStrokesOnCtx(ctx, strokes, size, vcell, cellpx) {
+  drawGridOnCtx(ctx, size, vcell);
+  strokes.forEach(function(stroke) {
+    if (stroke.points.length < 2) return;
+    // Scale points from the canonical 300-unit space to this canvas size
+    var sc = size / GRID_SIZE;
+    var scaled = stroke.points.map(function(p) { return {x: p.x*sc, y: p.y*sc}; });
+    if (isClosed(stroke)) {
+      ctx.beginPath();
+      ctx.moveTo(scaled[0].x, scaled[0].y);
+      scaled.forEach(function(p) { ctx.lineTo(p.x, p.y); });
+      ctx.closePath();
+      ctx.fillStyle = FILL_COLORS[stroke.color] || 'rgba(26,79,168,0.18)';
+      ctx.fill();
+      ctx.strokeStyle = stroke.color; ctx.lineWidth = size/75;
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.strokeStyle = stroke.color; ctx.lineWidth = size/75;
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.moveTo(scaled[0].x, scaled[0].y);
+      scaled.forEach(function(p) { ctx.lineTo(p.x, p.y); });
+      ctx.stroke();
+    }
+  });
+  // Grid on top
+  ctx.strokeStyle = '#b0b0b0'; ctx.lineWidth = 0.8;
+  for (var i = 0; i <= VISIBLE_CELLS; i++) {
+    ctx.beginPath(); ctx.moveTo(i*vcell,0); ctx.lineTo(i*vcell,size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,i*vcell); ctx.lineTo(size,i*vcell); ctx.stroke();
+  }
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.strokeRect(1,1,size-2,size-2);
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.arc(size/2, size/2, size/60, 0, Math.PI*2); ctx.fill();
+}
+
+function redrawAll(eye) {
+  // Redraw modal canvas if this eye is open
+  var modalCanvas = document.getElementById('gridModal_canvas');
+  if (document.getElementById('gridModal').classList.contains('open') && modalEye === eye) {
+    drawStrokesOnCtx(modalCanvas.getContext('2d'), grids[eye].strokes, MODAL_SIZE, MODAL_VCELL, MODAL_CELL);
+  }
+  // Always sync the preview thumbnail
+  syncPreview(eye);
+  updateGridScore(eye);
+}
+
+function syncPreview(eye) {
+  var previewId = eye === 'left' ? 'previewLeft' : 'previewRight';
+  var preview = document.getElementById(previewId);
+  drawStrokesOnCtx(preview.getContext('2d'), grids[eye].strokes, GRID_SIZE, VISIBLE_CELL_PX, CELL_PX);
+}
+
+// ── MODAL OPEN / CLOSE ──
+function openModal(eye) {
+  modalEye = eye;
+  modalPen = grids[eye].pen; // remember last pen choice
+  document.getElementById('modalEyeLabel').textContent = eye === 'left' ? '◉ Left Eye' : '◉ Right Eye';
+  // Restore pen button state
+  document.getElementById('modalBtnBlue').classList.toggle('active', modalPen === 'blue');
+  document.getElementById('modalBtnRed').classList.toggle('active', modalPen === 'red');
+  // Draw current strokes onto modal canvas
+  var modalCanvas = document.getElementById('gridModal_canvas');
+  drawStrokesOnCtx(modalCanvas.getContext('2d'), grids[eye].strokes, MODAL_SIZE, MODAL_VCELL, MODAL_CELL);
+  document.getElementById('gridModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('gridModal').classList.remove('open');
+  document.body.style.overflow = '';
+  // Sync pen choice back to grid state
+  grids[modalEye].pen = modalPen;
+  // Sync preview thumbnail
+  syncPreview(modalEye);
+}
+
+function setModalPen(pen) {
+  modalPen = pen;
+  grids[modalEye].pen = pen;
+  document.getElementById('modalBtnBlue').classList.toggle('active', pen === 'blue');
+  document.getElementById('modalBtnRed').classList.toggle('active', pen === 'red');
+}
+
+function modalUndo() {
+  undoLast(modalEye);
+  var modalCanvas = document.getElementById('gridModal_canvas');
+  drawStrokesOnCtx(modalCanvas.getContext('2d'), grids[modalEye].strokes, MODAL_SIZE, MODAL_VCELL, MODAL_CELL);
+}
+
+function modalClear() {
+  clearGrid(modalEye);
+  var modalCanvas = document.getElementById('gridModal_canvas');
+  drawStrokesOnCtx(modalCanvas.getContext('2d'), grids[modalEye].strokes, MODAL_SIZE, MODAL_VCELL, MODAL_CELL);
+}
+
+// ── MODAL DRAWING EVENTS ──
+function initModalDrawing() {
+  var canvas = document.getElementById('gridModal_canvas');
+  var ctx = canvas.getContext('2d');
+
+  function getModalPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var sx = MODAL_SIZE / rect.width, sy = MODAL_SIZE / rect.height;
+    // Convert to canonical 300-unit space for storage
+    var sc = GRID_SIZE / MODAL_SIZE;
+    if (e.touches) return {
+      x: (e.touches[0].clientX - rect.left) * sx * sc,
+      y: (e.touches[0].clientY - rect.top)  * sy * sc
+    };
+    return {
+      x: (e.clientX - rect.left) * sx * sc,
+      y: (e.clientY - rect.top)  * sy * sc
+    };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    if (!modalPen) {
+      // Flash the toolbar buttons as hint
+      document.getElementById('modalBtnBlue').style.outline = '2px solid var(--red-pen)';
+      setTimeout(function() { document.getElementById('modalBtnBlue').style.outline = ''; }, 1000);
+      return;
+    }
+    modalDrawing = true;
+    modalCurrentStroke = { color: PEN_COLORS[modalPen], points: [getModalPos(e)] };
+  }
+
+  function doDraw(e) {
+    e.preventDefault();
+    if (!modalDrawing || !modalPen) return;
+    var pos = getModalPos(e);
+    modalCurrentStroke.points.push(pos);
+    var pts = modalCurrentStroke.points;
+    if (pts.length < 2) return;
+    // Draw incrementally on modal canvas (in modal pixel space)
+    var sc = MODAL_SIZE / GRID_SIZE;
+    ctx.beginPath();
+    ctx.strokeStyle = modalCurrentStroke.color;
+    ctx.lineWidth = MODAL_SIZE/75; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.moveTo(pts[pts.length-2].x*sc, pts[pts.length-2].y*sc);
+    ctx.lineTo(pts[pts.length-1].x*sc, pts[pts.length-1].y*sc);
+    ctx.stroke();
+  }
+
+  function endModalDraw() {
+    if (!modalDrawing) return;
+    modalDrawing = false;
+    if (!modalCurrentStroke || modalCurrentStroke.points.length < 2) {
+      modalCurrentStroke = null; return;
+    }
+    var newStroke = modalCurrentStroke;
+    modalCurrentStroke = null;
+
+    // Multi-stroke merge
+    var strokes = grids[modalEye].strokes;
+    var mergedIdx = -1;
+    for (var i = strokes.length - 1; i >= 0; i--) {
+      if (!isClosed(strokes[i]) && canMerge(strokes[i], newStroke)) {
+        mergedIdx = i; break;
+      }
+    }
+    if (mergedIdx >= 0) {
+      strokes[mergedIdx] = mergeStrokes(strokes[mergedIdx], newStroke);
+    } else {
+      strokes.push(newStroke);
+    }
+
+    // Full redraw on modal canvas
+    drawStrokesOnCtx(ctx, grids[modalEye].strokes, MODAL_SIZE, MODAL_VCELL, MODAL_CELL);
+    updateGridScore(modalEye);
+  }
+
+  canvas.addEventListener('mousedown',  startDraw);
+  canvas.addEventListener('mousemove',  doDraw);
+  canvas.addEventListener('mouseup',    endModalDraw);
+  canvas.addEventListener('mouseleave', endModalDraw);
+  canvas.addEventListener('touchstart', startDraw, {passive:false});
+  canvas.addEventListener('touchmove',  doDraw,    {passive:false});
+  canvas.addEventListener('touchend',   endModalDraw);
+}
+
+function setPen(eye, pen) { grids[eye].pen = pen; }
+
+function clearGrid(eye) {
+  grids[eye].strokes = [];
+  grids[eye].currentStroke = null;
+  updateGridScore(eye);
+}
+
+function undoLast(eye) {
+  if (grids[eye].strokes.length > 0) {
+    grids[eye].strokes.pop();
+    updateGridScore(eye);
+  }
+}
+
+// Point-in-polygon test (ray casting)
+function pointInPolygon(px, py, points) {
+  var inside = false;
+  for (var i = 0, j = points.length - 1; i < points.length; j = i++) {
+    var xi = points[i].x, yi = points[i].y;
+    var xj = points[j].x, yj = points[j].y;
+    var intersect = ((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function computeGridMatrix(eye) {
+  var strokes = grids[eye].strokes;
+  var blue = [], red = [];
+  for (var r = 0; r < CELLS; r++) {
+    blue.push(new Array(CELLS).fill(0));
+    red.push(new Array(CELLS).fill(0));
+  }
+
+  strokes.forEach(function(stroke) {
+    var isBlue = stroke.color === '#1a4fa8';
+    var matrix = isBlue ? blue : red;
+
+    if (isClosed(stroke) && stroke.points.length >= 8) {
+      // Mark all cells whose center falls inside the polygon
+      for (var row = 0; row < CELLS; row++) {
+        for (var col = 0; col < CELLS; col++) {
+          var cx = (col + 0.5) * CELL_PX;
+          var cy = (row + 0.5) * CELL_PX;
+          if (pointInPolygon(cx, cy, stroke.points)) {
+            matrix[row][col] = 1;
+          }
+        }
+      }
+    } else {
+      // Open stroke: mark cells the pen crossed
+      stroke.points.forEach(function(p) {
+        var col = Math.floor(p.x / CELL_PX);
+        var row = Math.floor(p.y / CELL_PX);
+        if (col >= 0 && col < CELLS && row >= 0 && row < CELLS) matrix[row][col] = 1;
+      });
+    }
+  });
+  var blueCount = blue.reduce(function(a,r) { return a + r.reduce(function(b,v) { return b+v; },0); }, 0);
+  var redCount  = red.reduce(function(a,r)  { return a + r.reduce(function(b,v) { return b+v; },0); }, 0);
+  // Flat space-separated string, left-to-right top-to-bottom, 1600 values
+  var blueFlat = [].concat.apply([], blue);
+  var redFlat  = [].concat.apply([], red);
+  return {
+    blueMatrix: blue, redMatrix: red, blueCount: blueCount, redCount: redCount,
+    blueString: blueFlat.join(' '),
+    redString:  redFlat.join(' '),
+  };
+}
+
+function updateGridScore(eye) {
+  var m = computeGridMatrix(eye);
+  var cap = eye === 'left' ? 'Left' : 'Right';
+  document.getElementById('score' + cap + 'Blue').textContent = 'Wavy: '   + m.blueCount + '/1600';
+  document.getElementById('score' + cap + 'Red').textContent  = 'Missing: ' + m.redCount  + '/1600';
+}
+
+// ══════════════════════════════════════════
+//  PROGRESS BAR
+// ══════════════════════════════════════════
+function updateProgress() {
+  var fields = ['fullName','email','phone'];
+  var filled = fields.filter(function(id) { return document.getElementById(id).value.trim(); }).length;
+  document.getElementById('progressFill').style.width = (filled / fields.length * 100) + '%';
+}
+['fullName','email','phone'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', updateProgress);
+});
+
+// ══════════════════════════════════════════
+//  FORM SUBMIT
+// ══════════════════════════════════════════
+document.getElementById('mainForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var name  = document.getElementById('fullName').value.trim();
+  var email = document.getElementById('email').value.trim();
+  var phone = document.getElementById('phone').value.trim();
+
+  if (!name || !email || !phone) {
+    var fe = document.getElementById('formError');
+    fe.classList.add('show');
+    fe.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  document.getElementById('formError').classList.remove('show');
+
+  var c1 = document.getElementById('consent1').checked;
+  var c2 = document.getElementById('consent2').checked;
+  var c3 = document.getElementById('consent3').checked;
+  if (!c1 || !c2 || !c3) {
+    var ce = document.getElementById('consentError');
+    ce.classList.add('show');
+    ce.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  document.getElementById('consentError').classList.remove('show');
+
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Submitting\u2026';
+
+  function getRadio(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+
+  // Sync preview thumbnails before capturing images
+  syncPreview('left');
+  syncPreview('right');
+
+  var leftGrid  = computeGridMatrix('left');
+  var rightGrid = computeGridMatrix('right');
+
+  var payload = {
+    timestamp:   new Date().toISOString(),
+    fullName:    name,
+    email:       email,
+    phone:       phone,
+    dob:         document.getElementById('dob').value,
+    diagnosis:   document.getElementById('diagnosis').value.trim(),
+    day_vision:    sliderValues.day_vision,
+    night_vision:  sliderValues.night_vision,
+    visual_acuity: sliderValues.visual_acuity,
+    color_vibrancy: sliderValues.color_vibrancy,
+    reading_ease:  sliderValues.reading_ease,
+    glare_sens:    sliderValues.glare_sens,
+    overall:       sliderValues.overall,
+    eye_pain_side:    eyeSelections.eye_pain    || '',
+    eye_dryness_side: eyeSelections.eye_dryness || '',
+    contrast_c1: contrastAnswers.c1,
+    contrast_c2: contrastAnswers.c2,
+    contrast_c3: contrastAnswers.c3,
+    contrast_c4: contrastAnswers.c4,
+    contrast_c5: contrastAnswers.c5,
+    photophobia:  chipSelections.photo,
+    color_diff:   chipSelections.color,
+    night_glare:  getRadio('night_glare'),
+    dark_adapt_minutes: darkAdaptTime,
+    blink_clear:  getRadio('blink_clear'),
+    floaters:     getRadio('floaters'),
+    eye_affected: getRadio('eye_affected'),
+    change_since: getRadio('change'),
+    product_use:  getRadio('product_use'),
+    notes:        document.getElementById('notes').value.trim(),
+    consent_not_medical:  'confirmed',
+    consent_data_storage: 'confirmed',
+    consent_rights:       'confirmed',
+    consent_timestamp:    new Date().toISOString(),
+    gridLeft_img:          document.getElementById('previewLeft').toDataURL('image/png'),
+    gridRight_img:         document.getElementById('previewRight').toDataURL('image/png'),
+    gridLeft_blueMatrix:   leftGrid.blueString,
+    gridLeft_redMatrix:    leftGrid.redString,
+    gridLeft_blueScore:    leftGrid.blueCount,
+    gridLeft_redScore:     leftGrid.redCount,
+    gridRight_blueMatrix:  rightGrid.blueString,
+    gridRight_redMatrix:   rightGrid.redString,
+    gridRight_blueScore:   rightGrid.blueCount,
+    gridRight_redScore:    rightGrid.redCount,
+  };
+
+  try {
+    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+      await fetch(APPS_SCRIPT_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+    } else {
+      console.log('Demo mode — payload:', payload);
+      await new Promise(function(r) { setTimeout(r, 1000); });
+    }
+    document.getElementById('successEmail').textContent = email;
+    document.getElementById('successOverlay').classList.add('show');
+  } catch(err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.innerHTML = 'Submit Assessment';
+    alert('Submission error. Please try again.');
+  }
+});
+
+// ══════════════════════════════════════════
+//  INIT — all builders called here, once
+// ══════════════════════════════════════════
+buildSliders();
+buildEyeButtons();
+buildContrast();
+
+// Init preview canvases (draw empty grid on each)
+(function() {
+  var pl = document.getElementById('previewLeft');
+  var pr = document.getElementById('previewRight');
+  drawGridOnCtx(pl.getContext('2d'), GRID_SIZE, VISIBLE_CELL_PX);
+  drawGridOnCtx(pr.getContext('2d'), GRID_SIZE, VISIBLE_CELL_PX);
+  // Init modal canvas
+  drawGridOnCtx(document.getElementById('gridModal_canvas').getContext('2d'), MODAL_SIZE, MODAL_VCELL);
+  // Attach modal drawing events
+  initModalDrawing();
+})();
+
+</script>
+</body>
+</html>
